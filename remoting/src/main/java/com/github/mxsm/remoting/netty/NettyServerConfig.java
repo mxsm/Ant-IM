@@ -7,6 +7,6 @@ package com.github.mxsm.remoting.netty;
  */
 public class NettyServerConfig extends AbstractNettyConfig implements NettyConfig{
 
-    
+
 
 }
