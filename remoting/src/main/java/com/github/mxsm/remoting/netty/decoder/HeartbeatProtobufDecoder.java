@@ -14,7 +14,7 @@ import static com.github.mxsm.remoting.common.Heartbeat.*;
 /**
  * @author mxsm
  * @Date 2020/12/24
- * @Since
+ * @Since 1.0.0
  */
 @Slf4j
 public class HeartbeatProtobufDecoder extends ProtobufVarint32FrameDecoder {
