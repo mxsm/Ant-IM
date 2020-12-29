@@ -3,25 +3,119 @@ syntax = "proto3";
 package com.github.mxsm.serialization.protobuf;
 
 option java_package = "com.github.mxsm.serialization.protobuf";
-option java_outer_classname = "AntMessage";
+//option java_outer_classname = "AntMessageProtobuf";
+option java_multiple_files = true;
 
-message AntMessageProto{
-  Header header = 1;
-  message Header{
-    string protocol = 1; //协议名称
-    string version = 2; //协议版本号
-    string sender = 3; //消息发送者
-    string receiver = 4; //消息接收者
-    string messageType = 5; //消息类型
-    string contentType = 6; //参照http content-type类型
-    string terminalType = 7; //发送消息的终端
-    string deviceToken = 8; //发送消息的终端设备号
-  }
-  Auth auth = 2;
-  message Auth{
-    string token = 1;
-  }
-  string messageUnique = 3; //消息唯一值
-  int64 messageTime = 4; //消息的创建时间
-  bytes payload = 5;//消息体
+message AntMessagePackage{
+  string protocol = 1;    // 协议名称 YZIMP
+  string version = 2; // 协议版本号 2.0
+  int64 packageId = 3;    // 消息包序号，对于每个不同的connId，packageId从0开始重新计算-- 暂时没用因为接入其他
+  int64 packageTime = 4;  // 消息包时间戳
+  // 消息体置位标记，共4bytes，32bits，从最低位开始置位表示相应的消息体中是否包含内容
+  // 目前仅有最低4bit有效，分别从低位至高位代表用户信息、终端信息、控制信息、内容信息和附件信息
+  // 示意图：
+  // [[0][0][0][0][0][0][0][0] [0][0][0][0][0][0][0][0] [0][0][0][0][0][0][0][0] [0][0][0][Attachment][ImMessage][ImCtrlMessage][terminal][userInfo]]
+  // 如发送一个conn消息应该包含用户信息、终端信息、控制信息，不包含内容信息和附件信息，则flags的设置值为：
+  // [[0][0][0][0][0][0][0][0] [0][0][0][0][0][0][0][0] [0][0][0][0][0][0][0][0] [0][0][0][0][0][1][1][1]]
+  int32 flags = 5;
+  Header header = 6;
+  repeated CtrlMessage ctrlMessages = 7;    // 一个消息包中可发送多条控制消息报文，原则上不应该超过100条
+  repeated Message messages = 8;    // 一个消息包中可发送多条内容消息体，原则上不应该超过100条
+  repeated AttachmentMessage attachments = 9;   // 一个消息包中可发送多个文件附件，原则上不应该超过10个
+}
+
+message Header{
+  int64 sender = 1;
+  int64 receiver = 2;
+  Terminal terminal = 3;
+  UserMetadata userMetadata = 4;
+}
+
+// 终端信息消息体
+message Terminal {
+  TerminalType termType = 1;    // 终端类型，可能取值：Android, ios, web, DesktopApp, TestClient
+  string deviceType = 2;  // 设备型号，如华为P10, iPhoneX, iPad3, Chrome等
+  string osType = 3;  // 操作系统型号，如Android7.2, iOS11, Windows10等
+  string deviceToken = 4; // 设备编码
+}
+
+enum TerminalType {
+  ANDROID = 0;  // Android
+  IOS = 1;   // ios
+  WEB = 2; //web
+  DESKTOP_APP = 3; // DesktopApp
+  TEST_CLIENT = 4; // TestClient
+}
+
+// 内容信息消息体
+message Message {
+  int64 messageTime = 1;  // 消息报文时间戳
+  int64 messageId = 2;    // 消息报文ID，在同一次socket连接过程中保证唯一，即connId不变的情况下，该ID递增
+  MessageType messageType = 3; // 业务类型，如p2p, group, card, red等
+  MessageContentType messageContentType = 4;    // 内容消息类型
+  string mediaLink = 5;   // 内容消息额外链接URL地址
+  bytes payload = 6;  // 消息负载
+  string originalLink = 7;    // 原图链接URL地址，预留
+  int32 quotationMessageId = 8;  // 回复引用的消息报文ID，该引用的消息报文必须在本消息包中存在，预留
+  bool isAsync = 9;   // 是否需要回复ack的标志
+  bool isBurn = 10;   // 是否为阅后即焚消息标志，预留
+}
+
+// 用户信息消息体
+message UserMetadata {
+  int64 userId = 1;  // 用户ID
+  string userToken = 2;   // 登录token
+  int64 orgId = 3;   // 当前用户组织ID
+  string userName = 4;    // 当前用户名称
+  // 每次连接后由服务端产生的一个唯一一次连接ID，在同一次socket连接过程中保持不变，服务端和客户端应各自记录该ID值，在一次socket过程中保持传输该值
+  // 以每个用户作为一个命名空间
+  int64 connId = 5;
+  //拥有拓展
+  map<string,string> ext = 6;
+}
+
+enum CtrlMessageType {
+  CONN = 0;   // 连接类型
+  CLOSE = 1;  // 关闭连接类型
+  ACK = 2;    // 确认收取类型
+  RCV = 3;    // 确认已读类型，预留
+  TYPING = 4; // 正在输入中类型
+  DIAL = 5;   // 拨号类型
+  ANSWER = 6; // 接听类型
+}
+
+enum MessageType {
+  P2P = 0;  // 单聊
+  P2G = 1;   // 群聊
+}
+
+enum MessageContentType {
+  PLAINTEXT = 0;  // 纯文本
+  HTML = 1;   // HTML文本
+  JSON = 2;   // JSON对象
+  YAML = 3;   // YAML配置
+  IMAGE = 4;  // 图像
+  AUDIO = 5;  // 声音
+  VIDEO = 6;  // 视频
+}
+
+// 控制信息消息体
+message CtrlMessage {
+  int64 messageTime = 1;  // 消息报文时间戳
+  int32 messageId = 2;    // 消息报文ID，在同一次socket连接过程中保证唯一，即connId不变的情况下，该ID递增
+  int64 ctrlMessageId = 3;  // 控制消息报文ID
+  CtrlMessageType ctrlMessageType = 4;  // 控制消息类型
+  bool withCamera = 7;    // 拨号接听类型中是否使用视频聊天功能标志
+}
+
+//附件报文
+message AttachmentMessage {
+  int64 messageTime = 1;  // 消息报文时间戳
+  int64 messageId = 2;    // 消息报文ID，在同一次socket连接过程中保证唯一，即connId不变的情况下，该ID递增
+  string fileType = 5;    // 文件附件类型，如docx, pdf, xlsx等
+  string filename = 6;    // 文件附件名称，如xxx.pdf等
+  string fileTitle = 7;   // 文件附件标题
+  string fileLink = 8;    // 文件附件链接URL地址
+  bytes payload = 9;  // 发送时文件二进制内容，接收时该字段为空
+  bool isSync = 10;    // 是否为多端同步消息标志
 }
