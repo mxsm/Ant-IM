@@ -17,7 +17,7 @@ import static com.github.mxsm.remoting.common.Heartbeat.*;
  * @Since 1.0.0
  */
 @Slf4j
-public class HeartbeatProtobufDecoder extends ProtobufVarint32FrameDecoder {
+public class WrapperProtobufVarint32FrameDecoder extends ProtobufVarint32FrameDecoder {
 
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {

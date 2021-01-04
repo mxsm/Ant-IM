@@ -1,6 +1,8 @@
 package com.github.mxsm.remoting.netty.channel;
 
+import com.github.mxsm.remoting.netty.decoder.WrapperProtobufVarint32FrameDecoder;
 import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.SocketChannel;
 
 /**
@@ -20,6 +22,7 @@ public class ServerChannelInitializer extends ChannelInitializer<SocketChannel> 
      */
     @Override
     protected void initChannel(SocketChannel ch) throws Exception {
-
+        ChannelPipeline pipeline = ch.pipeline();
+        pipeline.addLast("", new WrapperProtobufVarint32FrameDecoder());
     }
 }
