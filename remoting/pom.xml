@@ -41,5 +41,9 @@
             <version>1.7.30</version>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>com.github.mxsm</groupId>
+            <artifactId>serialization-protobuf</artifactId>
+        </dependency>
     </dependencies>
 </project>

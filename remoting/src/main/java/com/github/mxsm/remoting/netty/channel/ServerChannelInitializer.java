@@ -1,14 +1,18 @@
 package com.github.mxsm.remoting.netty.channel;
 
 import com.github.mxsm.remoting.netty.decoder.WrapperProtobufVarint32FrameDecoder;
+import com.github.mxsm.serialization.protobuf.AntMessagePackage;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.SocketChannel;
+import io.netty.handler.codec.protobuf.ProtobufDecoder;
+import io.netty.handler.codec.protobuf.ProtobufEncoder;
+import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 
 /**
  * @author mxsm
  * @Date 2020/12/24
- * @Since
+ * @Since 1.0
  */
 public class ServerChannelInitializer extends ChannelInitializer<SocketChannel> {
     /**
@@ -23,6 +27,9 @@ public class ServerChannelInitializer extends ChannelInitializer<SocketChannel> 
     @Override
     protected void initChannel(SocketChannel ch) throws Exception {
         ChannelPipeline pipeline = ch.pipeline();
-        pipeline.addLast("", new WrapperProtobufVarint32FrameDecoder());
+        pipeline.addLast(new WrapperProtobufVarint32FrameDecoder());
+        pipeline.addLast(new ProtobufDecoder(AntMessagePackage.getDefaultInstance()));
+        pipeline.addLast(new ProtobufVarint32LengthFieldPrepender());
+        pipeline.addLast(new ProtobufEncoder());
     }
 }
