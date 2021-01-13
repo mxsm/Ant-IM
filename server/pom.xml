@@ -40,6 +40,10 @@
       <artifactId>lombok</artifactId>
       <scope>provided</scope>
     </dependency>
+    <dependency>
+      <groupId>com.github.mxsm</groupId>
+      <artifactId>remoting</artifactId>
+    </dependency>
   </dependencies>
 
 

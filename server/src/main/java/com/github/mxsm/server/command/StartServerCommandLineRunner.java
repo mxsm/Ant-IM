@@ -1,5 +1,7 @@
 package com.github.mxsm.server.command;
 
+import com.github.mxsm.remoting.netty.NettyRemotingServer;
+import com.github.mxsm.remoting.netty.NettyServerConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
@@ -21,6 +23,6 @@ public class StartServerCommandLineRunner implements CommandLineRunner {
      */
     @Override
     public void run(String... args) throws Exception {
-        log.info(">>>>>>>>>>>>>>>开始启动IM服务端<<<<<<<<<<<<<<<");
+        new NettyRemotingServer(new NettyServerConfig()).start();
     }
 }
