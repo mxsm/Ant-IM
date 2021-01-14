@@ -27,58 +27,28 @@ public class NettyRemotingServer implements RemotingServer {
 
     private final EventLoopGroup bossGroup;
 
-    private final EventLoopGroup workerGroup ;
+    private final EventLoopGroup workerGroup;
 
-   private final ServerBootstrap bootstrap;
+    private final ServerBootstrap bootstrap;
 
     private final NettyServerConfig config;
 
-    public NettyRemotingServer( final NettyServerConfig config) {
+    public NettyRemotingServer(final NettyServerConfig config) {
         this.bootstrap = new ServerBootstrap();
         this.config = config;
-        if(this.config.isUseEpoll()){
-            ThreadFactory threadFactory = new ThreadFactory() {
-                private AtomicInteger atomicInteger = new AtomicInteger(1);
-                @Override
-                public Thread newThread(Runnable r) {
-                    return new Thread(r, String.format("NettyServerBossEpoll_Thread_%d", atomicInteger.getAndIncrement()));
-                }
-            };
-            bossGroup = new EpollEventLoopGroup(1, threadFactory);
-        }else {
-            ThreadFactory threadFactory = new ThreadFactory() {
-                private AtomicInteger atomicInteger = new AtomicInteger(1);
-                @Override
-                public Thread newThread(Runnable r) {
-                    return new Thread(r, String.format("NettyServerBossNio_Thread_%d", atomicInteger.getAndIncrement()));
-                }
-            };
-            bossGroup = new NioEventLoopGroup(1, threadFactory);
+        if (this.config.isUseEpoll()) {
+            bossGroup = new EpollEventLoopGroup(1, new ThreadFactoryImpl("NettyServerBossEpoll_Thread_"));
+        } else {
+            bossGroup = new NioEventLoopGroup(1, new ThreadFactoryImpl("NettyServerBossEpoll_Thread_"));
         }
 
-        if(this.config.isUseEpoll()){
-            ThreadFactory threadFactory = new ThreadFactory() {
-                private AtomicInteger atomicInteger = new AtomicInteger(1);
-                @Override
-                public Thread newThread(Runnable r) {
-                    return new Thread(r, String.format("NettyServerWorkEpoll_Thread_%d", atomicInteger.getAndIncrement()));
-                }
-            };
-            workerGroup = new EpollEventLoopGroup(4, threadFactory);
-        }else {
-            ThreadFactory threadFactory = new ThreadFactory() {
-                private AtomicInteger atomicInteger = new AtomicInteger(1);
-                @Override
-                public Thread newThread(Runnable r) {
-                    return new Thread(r, String.format("NettyServerWorkNio_Thread_%d", atomicInteger.getAndIncrement()));
-                }
-            };
-            workerGroup = new NioEventLoopGroup(4, threadFactory);
+        if (this.config.isUseEpoll()) {
+            workerGroup = new EpollEventLoopGroup(4, new ThreadFactoryImpl("NettyServerWorkEpoll_Thread_"));
+        } else {
+            workerGroup = new NioEventLoopGroup(4, new ThreadFactoryImpl("NettyServerWorkEpoll_Thread_"));
         }
 
     }
-
-
 
 
     /**
@@ -88,10 +58,10 @@ public class NettyRemotingServer implements RemotingServer {
     public void start() {
 
         ServerBootstrap serverBootstrap = this.bootstrap.group(this.bossGroup, this.workerGroup)
-                .channel(useEpoll()? EpollServerSocketChannel.class: NioServerSocketChannel.class)
-                .option(ChannelOption.SO_BACKLOG,1024)
+                .channel(useEpoll() ? EpollServerSocketChannel.class : NioServerSocketChannel.class)
+                .option(ChannelOption.SO_BACKLOG, 1024)
                 .option(ChannelOption.SO_REUSEADDR, true)
-                .childOption(ChannelOption.SO_KEEPALIVE,true)
+                .childOption(ChannelOption.SO_KEEPALIVE, true)
                 .childOption(ChannelOption.TCP_NODELAY, true)
                 .childOption(ChannelOption.SO_SNDBUF, Integer.MAX_VALUE)
                 .childOption(ChannelOption.SO_RCVBUF, Integer.MAX_VALUE)
@@ -100,7 +70,7 @@ public class NettyRemotingServer implements RemotingServer {
 
         try {
             ChannelFuture channelFuture = serverBootstrap.bind().sync();
-            log.info("启动服务端[{}:{}]", InetAddress.getLocalHost().getHostAddress(),this.config.getPort());
+            log.info("启动服务端[{}:{}]", InetAddress.getLocalHost().getHostAddress(), this.config.getPort());
             channelFuture.channel().closeFuture().sync();
         } catch (Exception e) {
             log.error("服务启动失败" + e);
@@ -120,7 +90,7 @@ public class NettyRemotingServer implements RemotingServer {
         workerGroup.shutdownGracefully();
     }
 
-    private boolean useEpoll(){
+    private boolean useEpoll() {
         return this.config.isUseEpoll();
     }
 

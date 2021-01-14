@@ -8,9 +8,8 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
-import lombok.extern.slf4j.Slf4j;
-
 import java.net.SocketAddress;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * @author mxsm
@@ -18,7 +17,7 @@ import java.net.SocketAddress;
  * @Since
  */
 @Slf4j
-public class ProtobufServerHandler extends ChannelDuplexHandler {
+public class ProtobufClientHandler extends ChannelDuplexHandler {
 
     /**
      * Calls {@link ChannelHandlerContext#connect(SocketAddress, SocketAddress, ChannelPromise)} to forward
@@ -60,24 +59,4 @@ public class ProtobufServerHandler extends ChannelDuplexHandler {
         super.channelRead(ctx, msg);
     }
 
-    /**
-     * Calls {@link ChannelHandlerContext#fireUserEventTriggered(Object)} to forward
-     * to the next {@link ChannelInboundHandler} in the {@link ChannelPipeline}.
-     * <p>
-     * Sub-classes may override this method to change behavior.
-     *
-     * @param ctx
-     * @param evt
-     */
-    @Override
-    public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
-        if(evt instanceof IdleStateEvent){
-            IdleStateEvent event = (IdleStateEvent) evt;
-            if (IdleState.READER_IDLE.equals((event.state()))) {
-                log.info("......触发发送心跳.....");
-                ctx.writeAndFlush(Heartbeat.HEART_BEAT).addListener(ChannelFutureListener.CLOSE_ON_FAILURE);
-            }
-        }
-        super.userEventTriggered(ctx, evt);
-    }
 }

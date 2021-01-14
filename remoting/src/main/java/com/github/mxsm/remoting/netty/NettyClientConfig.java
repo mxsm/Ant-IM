@@ -7,4 +7,17 @@ package com.github.mxsm.remoting.netty;
  */
 public class NettyClientConfig extends AbstractNettyConfig implements NettyConfig{
 
+    /**
+     * 服务地址
+     */
+    private String serverAddress;
+
+
+    public String getServerAddress() {
+        return serverAddress;
+    }
+
+    public void setServerAddress(String serverAddress) {
+        this.serverAddress = serverAddress;
+    }
 }

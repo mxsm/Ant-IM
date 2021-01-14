@@ -7,9 +7,14 @@ package com.github.mxsm.remoting;
  */
 public interface RemotingClient extends RemotingService{
 
-
+    /**
+     * 同步发送
+     */
     void invokeSync();
 
+    /**
+     * 异步发送
+     */
     void invokeAsync();
 
 }
